@@ -10,13 +10,18 @@ import bank.cardissuing.customer.domain.KYCStatus;
 import bank.cardissuing.customer.exception.EntityNotFoundException;
 import bank.cardissuing.customer.infrastructure.CustomerRepository;
 import bank.cardissuing.customer.infrastructure.KYCRepository;
+import bank.cardissuing.idempotency.application.IdempotencyService;
+import bank.cardissuing.idempotency.application.IdempotencyServiceImpl;
+import bank.cardissuing.idempotency.domain.IdempotencyRecord;
 import bank.cardissuing.ledger.domain.LedgerAccount;
 import bank.cardissuing.ledger.infrastructure.LedgerAccountRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import tools.jackson.databind.ObjectMapper;
 
 import java.time.LocalDate;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -26,10 +31,21 @@ public class CardServiceImpl implements CardService {
     private final KYCRepository kycRepository;
     private final CustomerRepository customerRepository;
     private final LedgerAccountRepository ledgerAccountRepository;
+    private final IdempotencyService idempotencyService;
+    private final ObjectMapper objectMapper;
 
     @Override
     @Transactional
-    public Card issueCard(Long customerId) {
+    public Card issueCard(Long customerId, String idempotencyKey) {
+        Optional<String> existingJson = idempotencyService.getExistingResponse(idempotencyKey);
+        if (existingJson.isPresent()) {
+            try {
+                return objectMapper.readValue(existingJson.get(), Card.class);
+            } catch (Exception e) {
+                throw new RuntimeException("Failed to deserialize cached card response", e);
+            }
+        }
+
         Customer customer = customerRepository.findById(customerId)
                 .orElseThrow(() -> new EntityNotFoundException("Customer Not Found"));
 
@@ -46,11 +62,21 @@ public class CardServiceImpl implements CardService {
         card.setStatus(CardStatus.CREATED);
         card.setExpiryDate(LocalDate.now().plusYears(1));
 
+        Card savedCard = cardRepository.save(card);
+
         LedgerAccount account = new LedgerAccount();
-        account.setCard(card);
+        account.setCard(savedCard);
         account.setCurrency("VND");
         ledgerAccountRepository.save(account);
-        return cardRepository.save(card);
+
+        try {
+            String json = objectMapper.writeValueAsString(savedCard);
+            idempotencyService.saveResponse(idempotencyKey, json);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to serialize card response", e);
+        }
+
+        return savedCard;
     }
 
     private String generateLast4() {
