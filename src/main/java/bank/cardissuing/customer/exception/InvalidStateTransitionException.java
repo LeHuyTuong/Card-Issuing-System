@@ -1,7 +1,10 @@
 package bank.cardissuing.customer.exception;
 
-public class InvalidStateTransitionException extends RuntimeException {
+import bank.cardissuing.common.exception.BusinessException;
+import org.springframework.http.HttpStatus;
+
+public class InvalidStateTransitionException extends BusinessException {
     public InvalidStateTransitionException(String message) {
-        super(message);
+        super("INVALID_STATE_TRANSITION",message, HttpStatus.CONFLICT);
     }
 }

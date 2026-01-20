@@ -101,3 +101,22 @@ verify : kiểm tra  hành vi, ví dụ có gọi method save không
 **D. Service Layer Design**
 - Nguyên tắc: Service A không nên gọi Repository của B. Thay vào đó, gọi Service B.
 - Ví dụ: AuthorizationService gọi `LedgerService.debit()`, không gọi `LedgerEntryRepository.save()`.
+
+## 6. Advanced Banking Concepts (Week 6)
+
+### A. Idempotency (Tính bất biến khi gọi trùng)
+*   **Vấn đề:** Mạng lag, user click "Nhận thẻ" 2 lần. Nếu không xử lý, hệ thống tạo 2 thẻ -> lỗi dữ liệu nghiêm trọng.
+*   **Giải pháp:** Dùng `Idempotency-Key` (UUID) từ Client.
+    1.  Request 1 (Key A) -> Server xử lý -> Lưu kết quả vào bảng `idempotency_records`.
+    2.  Request 2 (Key A) -> Server thấy Key A đã có -> Trả về kết quả cũ (KHÔNG xử lý lại).
+*   **Interview Question:** "Làm sao để đảm bảo API trừ tiền không bị trừ 2 lần?" -> Trả lời: "Em dùng cơ chế Idempotency Key".
+
+### B. Audit Logging (Nhật ký kiểm toán)
+*   **Khác gì log thường?** Log thường để debug (dev xem). Audit Log để truy vết pháp lý (Security/Compliance xem) -> lưu hành động quan trọng (AI, LÚM NÀO, CÁI GÌ).
+*   **Async Logging:** Ghi log không được làm chậm luồng chính (User đang chờ nhận thẻ).
+    *   **Giải pháp:** Dùng `@Async` để đẩy việc ghi log sang thread khác.
+    *   **Propagation.REQUIRES_NEW:** Để kể cả khi transaction chính (phát hành thẻ) bị rollback (lỗi DB), thì log "đã cố gắng phát hành" vẫn được lưu lại để điều tra.
+
+### C. System Design: Log Storage
+*   **Hiện tại (MVP):** Lưu vào RDBMS (MySQL) cho đơn giản.
+*   **Future/Scale:** Với hệ thống lớn, em sẽ chuyển sang dùng **MongoDB** (Write-heavy optimized) hoặc **Elasticsearch** (Search optimized) kết hợp với **Kafka** để hứng log tốc độ cao.

@@ -13,7 +13,7 @@ import bank.cardissuing.customer.infrastructure.CustomerRepository;
 import bank.cardissuing.customer.infrastructure.KYCRepository;
 import bank.cardissuing.idempotency.application.IdempotencyService;
 import bank.cardissuing.ledger.infrastructure.LedgerAccountRepository;
-import tools.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

@@ -1,7 +1,10 @@
 package bank.cardissuing.customer.exception;
 
-public class EntityNotFoundException extends RuntimeException {
+import bank.cardissuing.common.exception.BusinessException;
+import org.springframework.http.HttpStatus;
+
+public class EntityNotFoundException extends BusinessException {
     public EntityNotFoundException(String message) {
-        super(message);
+        super("ENTITY_NOT_FOUND",message, HttpStatus.NOT_FOUND);
     }
 }

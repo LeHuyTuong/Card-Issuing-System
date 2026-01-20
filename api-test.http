@@ -1,0 +1,42 @@
+### 1. Test Validation Error (Thiếu cardId)
+POST http://localhost:8080/api/authorization
+Content-Type: application/json
+X-Trace-Id: trace-validation-001
+
+{
+  "amount": 50000,
+  "merchantName": "Shopee"
+}
+
+### 2. Test Resource Not Found (Card ID không tồn tại)
+POST http://localhost:8080/api/authorization
+Content-Type: application/json
+X-Trace-Id: trace-notfound-002
+
+{
+  "cardId": 999999,
+  "amount": 50000,
+  "merchantName": "Lazada"
+}
+
+### 3. Test Insufficient Funds (Số dư không đủ - Card 1 có 5,000,000)
+POST http://localhost:8080/api/authorization
+Content-Type: application/json
+X-Trace-Id: trace-insufficient-003
+
+{
+  "cardId": 1,
+  "amount": 999999999,
+  "merchantName": "Tiki"
+}
+
+### 4. SUCCESS Case: Authorize 50k (Đủ tiền -> 200 OK)
+POST http://localhost:8080/api/authorization
+Content-Type: application/json
+X-Trace-Id: trace-success-004
+
+{
+  "cardId": 1,
+  "amount": 50000,
+  "merchantName": "Highlands Coffee"
+}

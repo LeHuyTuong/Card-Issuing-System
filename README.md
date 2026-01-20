@@ -39,6 +39,16 @@ The system is divided into independent modules with strict boundaries:
 *   **Precision:** All monetary values use `BigDecimal` to prevent floating-point grounding errors.
 *   **Security:** Only the `last4` digits of cards are stored, strictly following data minimization principles.
 
+### 4. Idempotency & Safe Retries
+*   **Problem:** Network failures can cause duplicate requests (e.g., clicking "Issue Card" twice).
+*   **Solution:** Implemented **Idempotency Key** mechanism.
+    *   Requests with the same key are processed exactly once.
+    *   Subsequent requests return the cached response without re-executing logic or side effects.
+
+### 5. Async Audit Logging
+*   **Standard:** All critical actions (Issuing, Blocking, KYC updates) are traced for security & compliance.
+*   **Performance:** Uses `@Async` and `REQUIRES_NEW` propagation to ensure logging happens in a separate transaction without blocking the main user flow.
+
 ---
 
 ## Tech Stack
